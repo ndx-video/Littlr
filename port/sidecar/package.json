@@ -1,0 +1,19 @@
+{
+  "name": "zettlr-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zettlr Node.js sidecar — temporary bridge during Electron→Tauri migration",
+  "main": "main.js",
+  "scripts": {
+    "start": "tsx main.ts",
+    "build": "tsc",
+    "test": "echo \"TODO: provider contract tests\""
+  },
+  "dependencies": {
+    "tsx": "*"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "@types/node": "*"
+  }
+}

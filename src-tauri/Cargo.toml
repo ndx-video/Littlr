@@ -1,0 +1,24 @@
+[package]
+name = "zettlr"
+version = "0.1.0"
+description = "Zettlr Tauri shell — Electron→Tauri migration (Phase A)"
+authors = ["Zettlr Contributors"]
+license = "GPL-3.0-only"
+edition = "2021"
+
+# Filled in by `cargo tauri init` during Phase 0.1
+# [dependencies]
+# tauri = { version = "2", features = [] }
+# tauri-plugin-dialog = "2"
+# tauri-plugin-opener = "2"
+# tauri-plugin-clipboard = "2"
+# tauri-plugin-os = "2"
+# tauri-plugin-updater = "2"
+# serde = { version = "1", features = ["derive"] }
+# serde_json = "1"
+# tokio = { version = "1", features = ["process", "io-util"] }
+
+# [build-dependencies]
+# tauri-build = { version = "2", features = [] }
+
+# See https://tauri.app/ for full configuration reference
