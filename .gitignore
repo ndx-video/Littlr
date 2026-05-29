@@ -1,6 +1,11 @@
 # Node modules
 node_modules
 
+# Local env overrides (never commit secrets)
+.env
+.env.*
+!.env.example
+
 # Package Lock
 package-lock.json
 
@@ -10,10 +15,44 @@ dist/
 # Local Tauri / sidecar dev data (never commit)
 .zettlr-data/
 .zettlr-data-smoke/
+littlr-data/
 littlr.log/
+
+# Tauri generated schemas (dev/build)
+src-tauri/gen/
 
 # Rust build output
 src-tauri/target/
+
+# Playwright E2E
+/playwright-report/
+/blob-report/
+/test-results/
+/playwright/.cache/
+/playwright/.auth/
+
+# Vite dev cache
+.vite/
+
+# Test / coverage artifacts
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Local sidecar bootstrap copies (canonical assets live under static/)
+source/common/util/dict/
+source/common/util/lang/
+source/common/util/defaults/
+source/common/util/csl-locales/
+source/common/util/csl-styles/
+source/common/util/lua-filter/
+source/app/service-providers/assets/assets/
+source/app/service-providers/citeproc/assets/
+
+# OS junk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 
 # Ignore electron-forge build output
