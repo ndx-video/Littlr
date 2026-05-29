@@ -1,0 +1,87 @@
+name: Tauri Build Matrix
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [master, main]
+    paths:
+      - 'src-tauri/**'
+      - 'port/**'
+      - 'source/**'
+      - 'static/**'
+      - 'vite.config.ts'
+      - 'vite.shared.ts'
+      - '.github/workflows/tauri-build.yml'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            args: ''
+            target: linux-x64
+          - platform: macos-latest
+            args: '--target aarch64-apple-darwin'
+            target: macos-arm64
+          - platform: macos-latest
+            args: '--target x86_64-apple-darwin'
+            target: macos-x64
+          - platform: windows-latest
+            args: ''
+            target: windows-x64
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Build web
+        run: corepack yarn build:web
+
+      - name: Sidecar smoke test
+        run: corepack yarn sidecar:smoke
+
+      - name: Tauri build
+        run: corepack yarn tauri build ${{ matrix.args }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: littlr-${{ matrix.target }}
+          path: |
+            src-tauri/target/release/bundle/**/*
+            src-tauri/target/**/release/bundle/**/*

@@ -1,5 +1,8 @@
 name: Build
 
+# NOTE: Primary release builds use `.github/workflows/tauri-build.yml`.
+# This legacy Electron workflow is retained for reference only.
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
 #                    ZETTLR MAIN BUILD GITHUB ACTIONS FILE                    #
@@ -53,10 +56,11 @@ name: Build
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 on:
-  # Releases must be manually started.
+  # Legacy Electron release pipeline — disabled after Tauri migration (Phase 3).
+  # Use `.github/workflows/tauri-build.yml` for release artifacts.
   workflow_dispatch: {}
-  schedule: # Every Monday at noon (UTC) we run a scheduled nightly build
-    - cron: '0 12 * * 1'
+  # schedule:
+  #   - cron: '0 12 * * 1'
 
 # Defaults for every job and step in this workflow
 defaults:
