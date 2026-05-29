@@ -29,7 +29,11 @@
     "tauri:build": "tauri build",
     "sidecar:dev": "tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts",
     "sidecar:smoke": "node scripts/sidecar-smoke.mjs",
-    "pages:generate": "node scripts/generate-renderer-pages.mjs"
+    "pages:generate": "node scripts/generate-renderer-pages.mjs",
+    "playwright:install": "playwright install chromium",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@cds/core": "^6.17.0",
@@ -145,6 +149,7 @@
   },
   "devDependencies": {
     "@eslint/config-inspector": "^1.5.0",
+    "@playwright/test": "^1.60.0",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/cli": "^2.9.0",

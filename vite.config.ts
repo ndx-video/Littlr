@@ -65,6 +65,7 @@ export default defineConfig({
   resolve: {
     alias: [
       ...Object.entries(viteAliases).map(([find, replacement]) => ({ find, replacement })),
+      { find: 'electron', replacement: path.resolve(repoRoot, 'e2e/stubs/electron.browser-stub.ts') },
       { find: /^~(.+)/, replacement: path.resolve(repoRoot, 'node_modules/$1') }
     ],
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.vue', '.json', '.less', '.css']
