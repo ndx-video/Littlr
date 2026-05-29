@@ -25,7 +25,6 @@ import isFile from '@common/util/is-file'
 // Exporters
 import type { DefaultsOverride, ExporterAPI, ExporterOptions, ExporterOutput, PandocRunnerOutput } from './types'
 import { plugin as DefaultExporter } from './default-exporter'
-import { plugin as PDFExporter } from './pdf-exporter'
 import { plugin as TextbundleExporter } from './textbundle-exporter'
 import type AssetsProvider from '@providers/assets'
 import type LogProvider from '@providers/log'
@@ -55,19 +54,12 @@ export function getCustomProfiles (): PandocProfileMetadata[] {
       reader: 'markdown',
       writer: 'textpack',
       isInvalid: false
-    },
-    {
-      name: 'Simple PDF.yaml',
-      reader: 'markdown',
-      writer: 'simple-pdf',
-      isInvalid: false
     }
   ]
 }
 
 const PLUGINS = {
   pandoc: DefaultExporter,
-  'simple-pdf': PDFExporter,
   textbundle: TextbundleExporter
 }
 
@@ -104,8 +96,6 @@ export async function makeExport (
   // Search for the correct plugin to run, and run it. First the custom ones ...
   if ([ 'textbundle', 'textpack' ].includes(options.profile.writer)) {
     return await PLUGINS.textbundle(options, inputFiles, ctx)
-  } else if (options.profile.writer === 'simple-pdf') {
-    return await PLUGINS['simple-pdf'](options, inputFiles, ctx)
   } else {
     // ... otherwise run the regular Pandoc exporter.
     return await PLUGINS.pandoc(options, inputFiles, ctx)
