@@ -1,24 +1,28 @@
 [package]
-name = "zettlr"
+name = "littlr"
 version = "0.1.0"
-description = "Zettlr Tauri shell — Electron→Tauri migration (Phase A)"
-authors = ["Zettlr Contributors"]
+description = "Littlr Tauri shell — Electron→Tauri migration (Phase A)"
+authors = ["Littlr Contributors"]
 license = "GPL-3.0-only"
 edition = "2021"
+rust-version = "1.77.2"
 
-# Filled in by `cargo tauri init` during Phase 0.1
-# [dependencies]
-# tauri = { version = "2", features = [] }
-# tauri-plugin-dialog = "2"
-# tauri-plugin-opener = "2"
-# tauri-plugin-clipboard = "2"
-# tauri-plugin-os = "2"
-# tauri-plugin-updater = "2"
-# serde = { version = "1", features = ["derive"] }
-# serde_json = "1"
-# tokio = { version = "1", features = ["process", "io-util"] }
+[lib]
+name = "littlr_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
 
-# [build-dependencies]
-# tauri-build = { version = "2", features = [] }
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
 
-# See https://tauri.app/ for full configuration reference
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-os = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-single-instance = "2"

@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Default permissions for the Littlr Tauri shell","local":true,"windows":["main","win-*"],"permissions":["core:default","dialog:default","opener:default","clipboard-manager:default","os:default","shell:default","log:default"]}}
