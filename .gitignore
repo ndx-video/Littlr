@@ -4,8 +4,17 @@ node_modules
 # Package Lock
 package-lock.json
 
-# Compiled releases
-release
+# Vite build output (Tauri frontendDist)
+dist/
+
+# Local Tauri / sidecar dev data (never commit)
+.zettlr-data/
+.zettlr-data-smoke/
+littlr.log/
+
+# Rust build output
+src-tauri/target/
+
 
 # Ignore electron-forge build output
 out/
