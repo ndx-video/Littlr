@@ -40,3 +40,24 @@ corepack yarn test:e2e:report   # open HTML report after a run
 
 For full-stack tests (sidecar + Tauri shell), use `yarn sidecar:smoke` and manual UAT,
 or add a future Windows CDP project against a running `littlr.exe`.
+
+## HTML report
+
+```bash
+corepack yarn playwright test --reporter=html,list
+corepack yarn test:e2e:report   # opens playwright-report/index.html
+```
+
+## Roadmap (visual + parity)
+
+Reference UI: [Zettlr homepage screenshot](https://www.zettlr.com/) — three-pane layout
+(file manager left, editor centre, sidebar right), dense toolbar, Berlin theme.
+
+Planned E2E layers (in order):
+
+1. **Renderer harness (current)** — stub IPC, assert shell mounts without console errors.
+2. **Per-window smoke** — load all 14 MPA entries (`preferences`, `stats`, `tag_manager`, …).
+3. **Tutorial fixture** — mock FSAL with tutorial markdown; assert editor + ToC render.
+4. **Visual regression** — snapshot toolbar, file tree, and editor against baselines
+   (compare to Zettlr marketing screenshots for layout, not pixel-perfect branding).
+5. **Full-stack (Windows CI)** — launch `littlr.exe` via CDP; sidecar real RPC; no stubs.
