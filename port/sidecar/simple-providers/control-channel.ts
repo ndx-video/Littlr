@@ -1,37 +1,39 @@
 /**
- * ControlChannel — a lightweight bridge that lets the frontend
- * invoke simple control-plane commands (log-info, reload, etc.).
- * It lives inside the sidecar and forwards commands to
- * dedicated controller objects.
- *
- * All methods return a plain object that the JSON‑RPC
- * layer serialises back to the frontend.
+ * ControlChannel — lightweight control-plane commands for the Phase 0 spike.
  *
  * @license GNU GPL v3
  */
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'node:fs'
+import path from 'node:path'
 
-export class ControlChannel {
-  private logPath: string;
+export default class ControlChannel {
+  private logPath: string
 
-  constructor() {
-    // Resolve log path from the env var, fallback to ./littlr.log
-    this.logPath = path.resolve(process.env.ZETTLR_LOGS ?? './littlr.log');
+  constructor () {
+    this.logPath = path.resolve(process.env.ZETTLR_LOGS ?? './littlr.log', 'sidecar.log')
   }
 
-  /** Append a message to the log file */
-  async logInfo(payload: { message: string }): Promise<{ result: string }> {
-    const { message } = payload;
-    const timestamp = new Date().toISOString();
-    const entry = `${timestamp} ${message}\n`;
-    await fs.promises.appendFile(this.logPath, entry);
-    return { result: `Logged: ${message}` };
+  async logInfo (payload: { message: string }): Promise<{ result: string }> {
+    const { message } = payload
+    const timestamp = new Date().toISOString()
+    const entry = `${timestamp} ${message}\n`
+    await fs.promises.mkdir(path.dirname(this.logPath), { recursive: true })
+    await fs.promises.appendFile(this.logPath, entry)
+    return { result: `Logged: ${message}` }
   }
 
-  /** Reload the sidecar (useful for dev) */
-  async reload(): Promise<{ result: string }> {
-    // In a real app we would restart the process; for now just return OK.
-    return { result: 'reloaded' };
+  async reload (): Promise<{ result: string }> {
+    return { result: 'reloaded' }
+  }
+
+  async handle (_channel: string, command: string, payload: Record<string, unknown>): Promise<unknown> {
+    switch (command) {
+      case 'log-info':
+        return this.logInfo(payload as { message: string })
+      case 'reload':
+        return this.reload()
+      default:
+        return { error: { code: -32601, message: `Unknown command: ${command}` } }
+    }
   }
 }

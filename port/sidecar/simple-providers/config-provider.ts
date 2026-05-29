@@ -1,42 +1,53 @@
 /**
- * Simple ConfigProvider for the sidecar – reads a JSON file from the
+ * Simple ConfigProvider for the sidecar — reads a JSON file from the
  * directory pointed to by ZETTLR_USER_DATA.
- *
- * This mirrors the shape of the real ConfigProvider but only implements
- * the `getConfig` method needed for Phase 0.5.
  *
  * @license GNU GPL v3
  */
-export class SimpleConfigProvider {
-  private configPath: string;
+import fs from 'node:fs'
+import path from 'node:path'
 
-  constructor() {
-    // Resolve the config file location
+export default class ConfigProvider {
+  private configPath: string
+
+  constructor () {
     this.configPath = path.resolve(
       process.env.ZETTLR_USER_DATA ?? './littlr-data',
       'config.json'
-    );
+    )
   }
 
-  /** Load the JSON config file; return parsed object or empty object */
-  async getConfig(): Promise<Record<string, any>> {
+  async boot (): Promise<void> {
+    await fs.promises.mkdir(path.dirname(this.configPath), { recursive: true })
+  }
+
+  async getConfig (): Promise<Record<string, unknown>> {
     try {
-      const fileContent = await fs.promises.readFile(this.configPath, 'utf-8');
-      const parsed = JSON.parse(fileContent);
-      return typeof parsed === 'object' ? parsed : {};
+      const fileContent = await fs.promises.readFile(this.configPath, 'utf-8')
+      const parsed = JSON.parse(fileContent)
+      return typeof parsed === 'object' && parsed !== null ? parsed : {}
     } catch {
-      // If file does not exist yet, return empty object
-      return {};
+      return {}
     }
   }
 
-  /** Save a new config object (useful for dev editing) */
-  async setConfig(newConfig: Record<string, any]): Promise<void> {
-    await fs.promises.writeFile(this.configPath, JSON.stringify(newConfig, null, 2));
+  async setConfig (newConfig: Record<string, unknown>): Promise<void> {
+    await fs.promises.writeFile(this.configPath, JSON.stringify(newConfig, null, 2))
   }
 
-  /** Helper to expose the path for debugging */
-  getPath(): string {
-    return this.configPath;
+  getPath (): string {
+    return this.configPath
+  }
+
+  async handle (_channel: string, command: string, payload: Record<string, unknown>): Promise<unknown> {
+    switch (command) {
+      case 'get-config':
+        return { result: await this.getConfig() }
+      case 'set-config':
+        await this.setConfig(payload as Record<string, unknown>)
+        return { result: 'saved' }
+      default:
+        return { error: { code: -32601, message: `Unknown command: ${command}` } }
+    }
   }
 }

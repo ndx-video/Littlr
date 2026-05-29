@@ -16,11 +16,12 @@
       "@common/*": ["../../source/common/*"],
       "@providers/*": ["../../source/app/service-providers/*"],
       "@dts/*": ["../../source/types/*"],
-      "electron": ["./adapters/electron-shim"]
+      "electron": ["./adapters/electron-shim"],
+      "source/app/util/splash-screen": ["./adapters/splash-screen-stub"]
     },
     "baseUrl": "."
   },
-  "include": ["./**/*.ts", "../../source/app/service-providers/**/*.ts"],
+  "include": ["./**/*.ts", "../../source/**/*.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }

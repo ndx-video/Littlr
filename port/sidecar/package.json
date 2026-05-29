@@ -5,9 +5,10 @@
   "description": "Zettlr Node.js sidecar — temporary bridge during Electron→Tauri migration",
   "main": "main.ts",
   "scripts": {
-    "start": "npx tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts",
+    "start": "tsx --tsconfig tsconfig.json main.ts",
+    "start:root": "tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts",
     "build": "echo \"TODO: esbuild bundle for production\"",
-    "test": "echo \"Send JSON-RPC via stdin:\" && echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"provider-call\",\"params\":{\"channel\":\"config-provider\",\"command\":\"get-config\",\"payload\":{}}}' | npx tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts"
+    "test": "node --import tsx/esm --test test-provider.ts"
   },
   "dependencies": {
     "tsx": "^4",

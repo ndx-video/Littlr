@@ -1,148 +1,176 @@
 /**
  * Zettlr Sidecar — Node.js backend during Tauri migration
  *
- * Boots remapped providers and exposes them via stdio JSON-RPC.
- *
- * Phase A (current): Full sidecar, Rust = shell only
- * Phase B (future):  Providers migrate to Rust one by one → sidecar shrinks
- *
- * Run: npx tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts
+ * Boots the full AppServiceContainer and exposes providers via stdio JSON-RPC.
  *
  * @license GNU GPL v3
  */
-import { createInterface } from 'node:readline';
-import { ipcMain } from './adapters/electron-shim';
+import fs from 'node:fs'
+import path from 'node:path'
+import { createInterface } from 'node:readline'
+import { ipcMain } from './adapters/electron-shim'
+import {
+  AppServiceContainer,
+  setAppServiceContainer
+} from '../../source/app/app-service-container'
 
-// ---------------------------------------------------------------------------
-// 1. Bootstrap — order mirrors source/app-service-container.ts
-// ---------------------------------------------------------------------------
+process.env.LITTLR_TAURI = '1'
 
-let isBooted = false;
+// Sidecar uses stdout exclusively for JSON-RPC; route boot logs to stderr.
+console.log = (...args: unknown[]) => { console.error(...args) }
 
-async function boot(): Promise<void> {
-  // -----------------------------------------------------------------------
-  // Step 1: LogProvider (always first — section 7, R1)
-  // -----------------------------------------------------------------------
-  console.error('[sidecar] Booting LogProvider...');
-  const { default: LogProvider } = await import('./simple-providers/log-provider');
-  const logProvider = new LogProvider();
-  await logProvider.boot();
+;(globalThis as any).__GIT_COMMIT_HASH__ = process.env.GIT_COMMIT_HASH ?? 'dev'
+;(globalThis as any).__BUILD_DATE__ = new Date().toISOString()
+;(globalThis as any).__UPDATES_DISABLED__ = process.env.ZETTLR_DISABLE_UPDATE_CHECK !== undefined ? '1' : '0'
 
-  // -----------------------------------------------------------------------
-  // Step 2: ConfigProvider
-  // -----------------------------------------------------------------------
-  console.error('[sidecar] Booting ConfigProvider...');
-  const { default: ConfigProvider } = await import('./simple-providers/config-provider');
-  const configProvider = new ConfigProvider();
-  await configProvider.boot();
+const rendererEntryPages: Array<[string, string]> = [
+  ['MAIN_WINDOW', 'main'],
+  ['PRINT', 'print'],
+  ['LOG_VIEWER', 'log_viewer'],
+  ['PREFERENCES', 'preferences'],
+  ['TAG_MANAGER', 'tag_manager'],
+  ['PASTE_IMAGE', 'paste_image'],
+  ['ERROR', 'error'],
+  ['ABOUT', 'about'],
+  ['STATS', 'stats'],
+  ['ASSETS', 'assets'],
+  ['UPDATE', 'update'],
+  ['PROJECT_PROPERTIES', 'project_properties'],
+  ['SPLASH_SCREEN', 'splash_screen'],
+  ['ONBOARDING', 'onboarding']
+]
 
-  // -----------------------------------------------------------------------
-  // Step 3: FSAL (stub) – minimal read/write for Phase 0.5
-  // -----------------------------------------------------------------------
-  console.error('[sidecar] Booting FSAL (stub)...');
-  const { createStubFSAL } = await import('./stub-fs');
-  const fsal = createStubFSAL(logProvider, configProvider);
+function installRendererEntryGlobals (): void {
+  const pageBase = process.env.LITTLR_DEV_WEB_URL ?? 'http://localhost:5173'
+  for (const [prefix, page] of rendererEntryPages) {
+    ;(globalThis as any)[`${prefix}_WEBPACK_ENTRY`] = `${pageBase}/static/pages/${page}.html`
+    ;(globalThis as any)[`${prefix}_PRELOAD_WEBPACK_ENTRY`] = 'undefined'
+  }
+}
 
-  // -----------------------------------------------------------------------
-  // Step 4: Register all providers for JSON‑RPC routing
-  // -----------------------------------------------------------------------
-  const providers: Record<string, any> = {
-    'log-provider': logProvider,
-    'config-provider': configProvider,
-    'fsal-provider': fsal,
-    'test-provider': new (await import('./simple-providers/test-provider')).TestProvider(),
-    'control-provider': new (await import('./simple-providers/control-channel')).ControlChannel(),
-  };
+const repoRoot = path.resolve(__dirname, '..', '..')
 
-  // Wire each provider to the JSON‑RPC dispatcher
-  for (const [channel, prov] of Object.entries(providers)) {
-    const handler = (prov as any).handle;
-    if (typeof handler === 'function') {
-      ipcMain.handle(channel, (event, message) => handler(channel, message));
-    }
+function ensureDirCopy (target: string, source: string): void {
+  if (!fs.existsSync(target) && fs.existsSync(source)) {
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.cpSync(source, target, { recursive: true })
+  }
+}
+
+function bootstrapEnvironment (): void {
+  const userData = process.env.ZETTLR_USER_DATA ?? path.join(repoRoot, '.zettlr-data')
+  process.env.ZETTLR_USER_DATA = userData
+  process.env.ZETTLR_RESOURCES = process.env.ZETTLR_RESOURCES ?? path.join(repoRoot, 'static')
+  process.env.ZETTLR_LOGS = process.env.ZETTLR_LOGS ?? path.join(userData, 'logs')
+  process.env.ZETTLR_CACHE = process.env.ZETTLR_CACHE ?? path.join(userData, 'cache')
+
+  fs.mkdirSync(userData, { recursive: true })
+  fs.mkdirSync(process.env.ZETTLR_LOGS, { recursive: true })
+
+  fs.mkdirSync(path.join(userData, 'fsal', 'cache'), { recursive: true })
+
+  const staticRoot = path.join(repoRoot, 'static')
+  const assetDirs = ['lang', 'dict', 'defaults', 'csl-locales', 'csl-styles', 'lua-filter']
+  for (const dir of assetDirs) {
+    ensureDirCopy(path.join(userData, dir), path.join(staticRoot, dir))
+    ensureDirCopy(path.join(repoRoot, 'source/common/util', dir), path.join(staticRoot, dir))
   }
 
-  isBooted = true;
-  console.error(`[sidecar] Boot complete – ${Object.keys(providers).length} providers ready`);
-  startRPCLoop(providers);
-}
+  const assetsRoot = path.join(repoRoot, 'source/app/service-providers/assets/assets')
+  ensureDirCopy(path.join(assetsRoot, 'defaults'), path.join(staticRoot, 'defaults'))
+  ensureDirCopy(path.join(assetsRoot, 'lua-filter'), path.join(staticRoot, 'lua-filter'))
+  ensureDirCopy(path.join(assetsRoot, 'csl-locales'), path.join(staticRoot, 'csl-locales'))
+  ensureDirCopy(path.join(assetsRoot, 'csl-styles'), path.join(staticRoot, 'csl-styles'))
 
-// ---------------------------------------------------------------------------
-// 2. Stub FSAL (placeholder until real FSAL migrates to Rust)
-// ---------------------------------------------------------------------------
-function createStubFSAL(_log: any, _config: any) {
-  return {
-    _ipcChannel: 'fsal-provider',
-    async readFile(_path: string): Promise<string> {
-      return '';
-    },
-    async writeFile(_path: string, _content: string): Promise<void> {
-      // no‑op for now
-    },
-    async testRead(): Promise<string> {
-      return 'stub FSAL read OK';
-    },
-  };
+  const citeprocAssets = path.join(repoRoot, 'source/app/service-providers/citeproc/assets')
+  ensureDirCopy(path.join(citeprocAssets, 'csl-locales'), path.join(staticRoot, 'csl-locales'))
+  ensureDirCopy(path.join(citeprocAssets, 'csl-styles'), path.join(staticRoot, 'csl-styles'))
 }
-
-// ---------------------------------------------------------------------------
-// 3. JSON‑RPC over stdio
-// ---------------------------------------------------------------------------
 
 interface RPCRequest {
-  jsonrpc: '2.0';
-  id: number | string;
-  method: string;
-  params: {
-    channel: string;
-    command: string;
-    payload?: unknown;
-  };
+  jsonrpc: '2.0'
+  id: number | string
+  method: string
+  params: Record<string, unknown>
 }
 
 interface RPCResponse {
-  jsonrpc: '2.0';
-  id: number | string;
-  result?: unknown;
-  error?: { code: number; message: string };
+  jsonrpc: '2.0'
+  id: number | string
+  result?: unknown
+  error?: { code: number, message: string }
 }
 
-async function handleRequest(req: RPCRequest, providers: Record<string, any>): Promise<RPCResponse> {
-  const { channel, command, payload } = req.params;
-  const provider = providers[channel];
-  if (!provider) {
-    return { jsonrpc: '2.0', id: req.id, error: { code: -32601, message: `Unknown provider ${channel}` } };
-  }
-  const handler = (provider as any).handle;
-  if (typeof handler !== 'function') {
-    return { jsonrpc: '2.0', id: req.id, error: { code: -32601, message: `Provider ${channel} missing handle` } };
-  }
+async function handleProviderCall (params: Record<string, unknown>): Promise<unknown> {
+  const channel = String(params.channel ?? '')
+  const command = String(params.command ?? '')
+  const payload = (params.payload ?? {}) as Record<string, unknown>
+  return ipcMain._dispatch(channel, { command, payload })
+}
+
+async function handleProviderSync (params: Record<string, unknown>): Promise<unknown> {
+  const channel = String(params.channel ?? '')
+  const message = params.message ?? {}
+  return ipcMain._dispatchSync(channel, message)
+}
+
+async function handleRequest (req: RPCRequest): Promise<RPCResponse> {
   try {
-    const result = await handler(channel, payload);
-    return { jsonrpc: '2.0', id: req.id, result };
+    switch (req.method) {
+      case 'provider-call':
+        return {
+          jsonrpc: '2.0',
+          id: req.id,
+          result: await handleProviderCall(req.params as Record<string, unknown>)
+        }
+      case 'provider-sync':
+        return {
+          jsonrpc: '2.0',
+          id: req.id,
+          result: await handleProviderSync(req.params as Record<string, unknown>)
+        }
+      default:
+        return {
+          jsonrpc: '2.0',
+          id: req.id,
+          error: { code: -32601, message: `Unknown method ${req.method}` }
+        }
+    }
   } catch (err: any) {
-    return { jsonrpc: '2.0', id: req.id, error: { code: -32000, message: err.message ?? String(err) } };
+    return {
+      jsonrpc: '2.0',
+      id: req.id,
+      error: { code: -32000, message: err.message ?? String(err) }
+    }
   }
 }
 
-function startRPCLoop(providers: Record<string, any>): void {
-  const rl = createInterface({ input: process.stdin });
-  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, result: 'ready' }) + '\n');
+function startRPCLoop (): void {
+  const rl = createInterface({ input: process.stdin })
+  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, result: 'ready' }) + '\n')
 
   rl.on('line', async (line: string) => {
-    const trimmed = line.trim();
-    if (!trimmed) return;
-    const req: RPCRequest = JSON.parse(trimmed);
-    if (req.jsonrpc !== '2.0' || typeof req.method !== 'string') return;
-    const res = await handleRequest(req, providers);
-    process.stdout.write(JSON.stringify(res) + '\n');
-  });
+    const trimmed = line.trim()
+    if (!trimmed) return
+    const req = JSON.parse(trimmed) as RPCRequest
+    if (req.jsonrpc !== '2.0' || typeof req.method !== 'string') return
+    const res = await handleRequest(req)
+    process.stdout.write(JSON.stringify(res) + '\n')
+  })
 }
 
-// ---------------------------------------------------------------------------
-// 4. Entry point
-// ---------------------------------------------------------------------------
+async function boot (): Promise<void> {
+  bootstrapEnvironment()
+  installRendererEntryGlobals()
+  console.error('[sidecar] Booting AppServiceContainer (Tauri mode)...')
+  const container = new AppServiceContainer()
+  setAppServiceContainer(container)
+  await container.boot()
+  console.error('[sidecar] Boot complete')
+  startRPCLoop()
+}
+
 boot().catch(err => {
-  console.error('[sidecar] Fatal:', err);
-  process.exit(1);
-});
+  console.error('[sidecar] Fatal:', err)
+  process.exit(1)
+})

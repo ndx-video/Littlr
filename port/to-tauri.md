@@ -488,15 +488,17 @@ Assumes 1–2 experienced contributors part-time on port; full-time core team ha
 1. Sidecar IPC: stdio JSON-RPC vs localhost TCP vs Tauri inter-process plugin?
 2. Print window: ship, defer, or remove with Simple PDF?
 3. Onboarding: web window vs Rust-native screen?
-4. Auto-update: built-in Tauri updater vs keep custom GitHub release logic only?
+4. Auto-update: **deferred** — Tauri updater plugin needs signed endpoint; custom `UpdateProvider` remains until wired.
 
 ---
 
 ## Appendix A — Parity checklist (beta gate)
 
-- [ ] Single-instance / CLI open files
+Status key: `[x]` verified in dev, `[~]` partial / needs UAT, `[ ]` not verified.
+
+- [~] Single-instance / CLI open files (Rust plugin wired; needs UAT)
 - [ ] Custom `userData` path flag
-- [ ] File watcher + FSAL CRUD
+- [~] File watcher + FSAL CRUD (sidecar FSAL boots; needs UAT)
 - [ ] Multi-root workspaces
 - [ ] Editor: syntax, lint, autocomplete, vim/emacs modes
 - [ ] Citations (live preview + export)
@@ -509,13 +511,13 @@ Assumes 1–2 experienced contributors part-time on port; full-time core team ha
 - [ ] Project properties
 - [ ] Statistics
 - [ ] Log viewer
-- [ ] Updater
+- [ ] Updater (deferred — no Tauri updater endpoint yet)
 - [ ] Tray (where supported)
 - [ ] Platform menus (macOS app menu)
 - [ ] Dark/light/system themes + custom CSS
 - [ ] LanguageTool (if enabled)
 - [ ] Tutorial first-run copy
-- [ ] ARM + x64 builds for win/mac/linux
+- [ ] ARM + x64 builds for win/mac/linux (CI matrix present; needs green runs + UAT)
 
 ---
 
