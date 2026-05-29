@@ -395,6 +395,14 @@ export default class MenuProvider extends ProviderContract {
    * Generates and sets the main application menu
    */
   set (): void {
+    if (process.env.LITTLR_TAURI === '1') {
+      const built = this._build()
+      broadcastIPCMessage('menu-provider', {
+        command: 'application-menu',
+        payload: built.items.map(item => this._makeItemSerializable(item))
+      })
+      return
+    }
     Menu.setApplicationMenu(this._build())
     // Notify all open windows of a new menu, so that they can
     // adapt their settings.

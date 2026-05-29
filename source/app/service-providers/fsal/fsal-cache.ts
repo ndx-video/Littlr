@@ -185,11 +185,18 @@ export default class FSALCache {
     this._data.clear()
     this._accessed.clear()
 
-    // We'll collect the cache clearing actions to resolve them all
-    const directoryContents = await fs.readdir(this._datadir)
-    for (const file of directoryContents) {
-      const realPath = path.join(this._datadir, file)
-      await fs.unlink(realPath)
+    try {
+      await fs.mkdir(this._datadir, { recursive: true })
+      const directoryContents = await fs.readdir(this._datadir)
+      for (const file of directoryContents) {
+        const realPath = path.join(this._datadir, file)
+        await fs.unlink(realPath)
+      }
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        return
+      }
+      throw err
     }
   }
 

@@ -78,6 +78,30 @@ export default class LogProvider extends ProviderContract {
 
         return this._log.slice(nextIndex)
       }
+
+      if (command === 'renderer-console') {
+        const body = payload.payload ?? payload
+        const windowId = String(body.windowId ?? 'unknown')
+        const sourceId = String(body.sourceId ?? 'renderer')
+        const lineNumber = Number(body.lineNumber ?? 0)
+        const message = String(body.message ?? '')
+        const logMessage = `[R] [${windowId}] ${message} (${path.basename(sourceId)}:${lineNumber})`
+
+        switch (body.level) {
+          case 'debug':
+            this.verbose(logMessage)
+            break
+          case 'warning':
+            this.warning(logMessage)
+            break
+          case 'error':
+            this.error(logMessage)
+            break
+          default:
+            this.info(logMessage)
+        }
+        return true
+      }
     })
   }
 

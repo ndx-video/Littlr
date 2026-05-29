@@ -21,6 +21,8 @@
 import type LogProvider from '@providers/log'
 import { BrowserWindow } from 'electron'
 
+const isTauriSidecar = process.env.LITTLR_TAURI === '1'
+
 let splashScreen: BrowserWindow|undefined
 
 // These two properties always hold the last message/percent that has been
@@ -38,6 +40,10 @@ let debounceTimeout: NodeJS.Timeout|undefined
  * @param   {LogProvider}  logger  The logger for potential error messages.
  */
 export function showSplashScreen (logger: LogProvider): void {
+  if (isTauriSidecar) {
+    return
+  }
+
   if (splashScreen !== undefined) {
     splashScreen.show()
     return
@@ -90,6 +96,10 @@ export function showSplashScreen (logger: LogProvider): void {
  * @param   {number}  currentStepPercentage  The step percentage (0-100).
  */
 export function updateSplashScreen (currentStepMessage: string, currentStepPercentage: number): void {
+  if (isTauriSidecar) {
+    return
+  }
+
   initSplashScreenMessage = currentStepMessage
   initSplashScreenPercent = currentStepPercentage
 
@@ -109,6 +119,10 @@ export function updateSplashScreen (currentStepMessage: string, currentStepPerce
  * done.
  */
 export function closeSplashScreen (): void {
+  if (isTauriSidecar) {
+    return
+  }
+
   // NOTE: We must "destroy" the window, because otherwise 'closable: false'
   // will prevent programmatic closing.
   splashScreen?.destroy()
