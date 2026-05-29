@@ -26,7 +26,7 @@ for (const { name, folder, title } of rendererWindows) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' http://127.0.0.1:* http://localhost:*">
   <title>${title}</title>
 </head>
 <body>
