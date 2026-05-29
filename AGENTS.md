@@ -33,6 +33,7 @@ Completed:
 - Simple PDF export removed (Pandoc PDF remains)
 - CI: `.github/workflows/tauri-spike.yml`, `.github/workflows/tauri-build.yml`
 - Sidecar smoke test: `corepack yarn sidecar:smoke`
+- Playwright E2E (renderer harness): `corepack yarn test:e2e` — see `e2e/README.md`
 
 Known gaps (Phase 3 / pre-UAT):
 
@@ -52,6 +53,8 @@ Known gaps (Phase 3 / pre-UAT):
 | Tauri release build | repo root | `corepack yarn tauri:build` |
 | Sidecar alone (stdio JSON-RPC) | repo root | `corepack yarn sidecar:dev` |
 | Sidecar boot + RPC smoke test | repo root | `corepack yarn sidecar:smoke` |
+| Playwright E2E (renderer harness) | repo root | `corepack yarn test:e2e` |
+| Install Playwright Chromium | repo root | `corepack yarn playwright:install` |
 | Regenerate HTML entrypoints | repo root | `corepack yarn pages:generate` |
 
 **Do not** run `tauri dev` from `port/sidecar/` — that directory is the Node backend only.
@@ -80,7 +83,8 @@ src-tauri/src/sync_http.rs          # Renderer sendSync bridge
 src-tauri/src/native_rpc.rs         # Dialog/shell/clipboard/window RPC
 src-tauri/src/windows.rs            # Webview window registry
 vite.config.ts                      # Vite MPA build
-static/pages/*.html                 # Renderer entry HTML (tauri-shim injected)
+playwright.config.ts                 # Playwright config (Vite webServer on 5173)
+e2e/                                # Browser E2E harness + IPC stubs
 ```
 
 ## Branding note
