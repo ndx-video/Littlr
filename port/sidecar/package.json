@@ -3,17 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "description": "Zettlr Node.js sidecar — temporary bridge during Electron→Tauri migration",
-  "main": "main.js",
+  "main": "main.ts",
   "scripts": {
-    "start": "tsx main.ts",
-    "build": "tsc",
-    "test": "echo \"TODO: provider contract tests\""
+    "start": "npx tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts",
+    "build": "echo \"TODO: esbuild bundle for production\"",
+    "test": "echo \"Send JSON-RPC via stdin:\" && echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"provider-call\",\"params\":{\"channel\":\"config-provider\",\"command\":\"get-config\",\"payload\":{}}}' | npx tsx --tsconfig port/sidecar/tsconfig.json port/sidecar/main.ts"
   },
   "dependencies": {
-    "tsx": "*"
+    "tsx": "^4",
+    "tsconfig-paths": "^4"
   },
   "devDependencies": {
-    "typescript": "*",
-    "@types/node": "*"
+    "typescript": "^5",
+    "@types/node": "^22"
   }
 }

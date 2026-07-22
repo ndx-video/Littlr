@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "types": ["node"],
+    "paths": {
+      "source/*": ["../../source/*"],
+      "@common/*": ["../../source/common/*"],
+      "@providers/*": ["../../source/app/service-providers/*"],
+      "@dts/*": ["../../source/types/*"],
+      "electron": ["./adapters/electron-shim"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["./**/*.ts", "../../source/app/service-providers/**/*.ts"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}
